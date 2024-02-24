@@ -27,6 +27,14 @@ public class RepositoryService {
         List<Repository> repositories = gitHubWebClient.getUserRepos(username);
         return repositories.stream()
                 .filter(repository -> !repository.isFork())
-                .map(repositoryMapper::repositoryToRepositoryDto).collect(Collectors.toList());
+                .map(repositoryMapper::repositoryToRepositoryDto)
+                .map(repositoryDto -> {
+                    repositoryDto.setBranches(gitHubWebClient.getRepoBranches(repositoryDto.getOwnerLogin(), repositoryDto.getRepoName())
+                            .stream()
+                            .map(branchMapper::branchToBranchDto)
+                            .collect(Collectors.toList()));
+                    return repositoryDto;
+                })
+                .collect(Collectors.toList());
     }
 }

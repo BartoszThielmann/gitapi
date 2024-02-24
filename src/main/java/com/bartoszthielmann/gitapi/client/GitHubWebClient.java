@@ -1,5 +1,6 @@
 package com.bartoszthielmann.gitapi.client;
 
+import com.bartoszthielmann.gitapi.entity.Branch;
 import com.bartoszthielmann.gitapi.entity.Repository;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -21,11 +22,20 @@ public class GitHubWebClient {
 
     public List<Repository> getUserRepos(String username) {
         String url = BASE_URL + "/users/" + username + "/repos?per_page=100";
-        ResponseEntity<List<Repository>> rateResponse =
+        ResponseEntity<List<Repository>> response =
                 restTemplate.exchange(url,
                         HttpMethod.GET, null, new ParameterizedTypeReference<List<Repository>>() {
                         });
-        List<Repository> repositories = rateResponse.getBody();
+        List<Repository> repositories = response.getBody();
         return repositories;
+    }
+
+    public List<Branch> getRepoBranches(String owner, String repo) {
+        String url = BASE_URL + "/repos/" + owner + "/" + repo + "/branches?per_page=100";
+        ResponseEntity<List<Branch>> response =
+                restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<List<Branch>>() {
+                });
+        List<Branch> branches = response.getBody();
+        return branches;
     }
 }
