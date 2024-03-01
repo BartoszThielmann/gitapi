@@ -3,6 +3,7 @@ package com.bartoszthielmann.gitapi.client;
 import com.bartoszthielmann.gitapi.entity.Branch;
 import com.bartoszthielmann.gitapi.entity.Repository;
 import com.bartoszthielmann.gitapi.exception.UserNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,7 +22,8 @@ import java.util.regex.Pattern;
 public class GitHubWebClient {
 
     private final RestTemplate restTemplate;
-    private static final String BASE_URL = "https://api.github.com";
+    @Value("${github.baseUrl}")
+    private String BASE_URL;
     private static final Pattern NEXT_PAGE_URL_PATTERN = Pattern.compile("<([^>]+)>; rel=\"next\"");
 
     public GitHubWebClient(RestTemplate restTemplate) {
