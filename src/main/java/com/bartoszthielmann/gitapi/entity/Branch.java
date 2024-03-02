@@ -1,7 +1,15 @@
 package com.bartoszthielmann.gitapi.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Branch {
 
     @JsonProperty("name")
@@ -9,29 +17,6 @@ public class Branch {
 
     @JsonProperty("commit")
     private Commit commit;
-
-    public Branch() {}
-
-    public Branch(String name, Commit commit) {
-        this.name = name;
-        this.commit = commit;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Commit getCommit() {
-        return commit;
-    }
-
-    public void setCommit(Commit commit) {
-        this.commit = commit;
-    }
 
     public String getSha() {
         return commit != null ? commit.getSha() : null;
@@ -44,23 +29,13 @@ public class Branch {
         commit.setSha(sha);
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Commit {
 
         @JsonProperty("sha")
         private String sha;
-
-        public Commit() {}
-
-        public Commit(String sha) {
-            this.sha = sha;
-        }
-
-        public String getSha() {
-            return sha;
-        }
-
-        public void setSha(String sha) {
-            this.sha = sha;
-        }
     }
 }

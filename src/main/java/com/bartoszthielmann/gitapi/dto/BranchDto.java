@@ -1,32 +1,17 @@
 package com.bartoszthielmann.gitapi.dto;
 
-public class BranchDto {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BranchDto {
     private String name;
     private String sha;
-
-    public BranchDto() {}
-
-    public BranchDto(String name, String sha) {
-        this.name = name;
-        this.sha = sha;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSha() {
-        return sha;
-    }
-
-    public void setSha(String sha) {
-        this.sha = sha;
-    }
 }
 
 

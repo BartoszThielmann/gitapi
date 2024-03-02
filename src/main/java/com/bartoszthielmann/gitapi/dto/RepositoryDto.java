@@ -1,42 +1,18 @@
 package com.bartoszthielmann.gitapi.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RepositoryDto {
-
     private String repoName;
     private String ownerLogin;
     private List<BranchDto> branches;
-
-    public RepositoryDto() {}
-
-    public RepositoryDto(String repoName, String ownerLogin, List<BranchDto> branches) {
-        this.repoName = repoName;
-        this.ownerLogin = ownerLogin;
-        this.branches = branches;
-    }
-
-    public String getRepoName() {
-        return repoName;
-    }
-
-    public void setRepoName(String repoName) {
-        this.repoName = repoName;
-    }
-
-    public String getOwnerLogin() {
-        return ownerLogin;
-    }
-
-    public void setOwnerLogin(String ownerLogin) {
-        this.ownerLogin = ownerLogin;
-    }
-
-    public List<BranchDto> getBranches() {
-        return branches;
-    }
-
-    public void setBranches(List<BranchDto> branches) {
-        this.branches = branches;
-    }
 }

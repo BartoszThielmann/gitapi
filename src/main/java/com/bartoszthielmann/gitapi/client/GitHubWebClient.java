@@ -3,94 +3,93 @@ package com.bartoszthielmann.gitapi.client;
 import com.bartoszthielmann.gitapi.entity.Branch;
 import com.bartoszthielmann.gitapi.entity.Repository;
 import com.bartoszthielmann.gitapi.exception.UserNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class GitHubWebClient {
-    private final WebClient webClient;
 
-    public GitHubWebClient() {
-        this.webClient = WebClient.builder()
-                .baseUrl("https://api.github.com")
-                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
-                .build();
+    private final RestTemplate restTemplate;
+    @Value("${github.baseUrl}")
+    private String BASE_URL;
+    private static final Pattern NEXT_PAGE_URL_PATTERN = Pattern.compile("<([^>]+)>; rel=\"next\"");
+
+    public GitHubWebClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
-    public Flux<Repository> getUserRepos(String username) {
-        return getUserRepos(username, 1);
-    }
+    public List<Repository> getUserRepos(String username) {
+        ResponseEntity<List<Repository>> currPageResponse;
+        List<Repository> allRepositories = new ArrayList<>();
+        String url = BASE_URL + "/users/" + username + "/repos?per_page=100";
 
-    private Flux<Repository> getUserRepos(String username, int page) {
-        return webClient.get()
-                .uri("/users/{username}/repos?per_page=100&page={page}", username, page)
-                .exchangeToFlux(response -> {
-                    if (response.statusCode().isError()) {
-                        if (response.statusCode() == HttpStatus.NOT_FOUND) {
-                            return Flux.error(new UserNotFoundException());
-                        } else {
-                            return Flux.error(new RuntimeException(String.format(
-                                    "Error received in response from" +
-                                            " https://api.github.com/users/%s/repos?per_page=100&page=%d: ",
-                                    username, page) + String.valueOf(response.statusCode())));
-                        }
-                    }
-                    if (hasNextPage(response)) {
-                        return response.toEntityList(Repository.class)
-                                .flatMapMany(entity -> {
-                                    Flux<Repository> currentPageRepos = Flux.fromIterable(entity.getBody());
-                                    return Flux.concat(currentPageRepos, getUserRepos(username, page + 1));
-                                });
-                    } else {
-                        return response.bodyToFlux(Repository.class);
-                    }
-                })
-                .onErrorResume(e -> Flux.error(e));
-    }
-
-    public Flux<Branch> getRepoBranches(String owner, String repo) {
-        return getRepoBranches(owner, repo, 1);
-    }
-
-    private Flux<Branch> getRepoBranches(String owner, String repo, int page) {
-        return webClient.get()
-                .uri("/repos/{owner}/{repo}/branches?per_page=100&page={page}", owner, repo, page)
-                .exchangeToFlux(response -> {
-                    if (response.statusCode().isError()) {
-                        return Flux.error(new RuntimeException(String.format("Error received in response from " +
-                                "https://api.github.com/repos/%s/%s/branches?per_page=100&page=%d: ", owner, repo, page)
-                                + String.valueOf(response.statusCode())));
-                    }
-                    if (hasNextPage(response)) {
-                        return response.toEntityList(Branch.class)
-                                .flatMapMany(entity -> {
-                                    Flux<Branch> currentPageBranches = Flux.fromIterable(entity.getBody());
-                                    return Flux.concat(currentPageBranches, getRepoBranches(owner, repo, page + 1));
-                                });
-                    } else {
-                        return response.bodyToFlux(Branch.class);
-                    }
-                }).onErrorResume(e -> Flux.error(e));
-    }
-
-    private boolean hasNextPage(ClientResponse response) {
-        HttpHeaders headers = response.headers().asHttpHeaders();
-        if (headers.containsKey(HttpHeaders.LINK)) {
-            List<String> linkHeader = headers.get(HttpHeaders.LINK);
-            for (String item : linkHeader) {
-                if (item.contains("rel=\"next\"")) {
-                    return true;
+        while (url != null) {
+            try {
+                currPageResponse = restTemplate.exchange(url,
+                        HttpMethod.GET, null, new ParameterizedTypeReference<List<Repository>>() {
+                        });
+            } catch (HttpStatusCodeException e) {
+                if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                    throw new UserNotFoundException();
                 }
+                throw e;
             }
+
+            List<Repository> currPageRepositories = currPageResponse.getBody();
+            if (currPageRepositories != null) {
+                allRepositories.addAll(currPageRepositories);
+            }
+
+            List<String> linkHeader = currPageResponse.getHeaders().get(HttpHeaders.LINK);
+            url = getNextPageUrl(linkHeader);
         }
-        return false;
+        return allRepositories;
+    }
+
+    public List<Branch> getRepoBranches(String owner, String repo) {
+        ResponseEntity<List<Branch>> currPageResponse;
+        List<Branch> allBranches = new ArrayList<>();
+        String url = BASE_URL + "/repos/" + owner + "/" + repo + "/branches?per_page=100";
+
+        while (url != null) {
+            currPageResponse =
+                restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<List<Branch>>() {
+                });
+
+            List<Branch> currPageRepositories = currPageResponse.getBody();
+            if (currPageRepositories != null) {
+                allBranches.addAll(currPageRepositories);
+            }
+
+            List<String> linkHeader = currPageResponse.getHeaders().get(HttpHeaders.LINK);
+            url = getNextPageUrl(linkHeader);
+        }
+        return allBranches;
+    }
+
+    private String getNextPageUrl(List<String> linkHeader) {
+        if (linkHeader == null) {
+            return null;
+        }
+        return linkHeader.stream()
+                .filter(link -> link.contains("rel=\"next\""))
+                .map(link -> {
+                    Matcher matcher = NEXT_PAGE_URL_PATTERN.matcher(link);
+                    return matcher.find() ? matcher.group(1) : null;
+                })
+                .findFirst()
+                .orElse(null);
     }
 }
