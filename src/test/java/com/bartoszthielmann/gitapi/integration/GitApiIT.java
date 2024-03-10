@@ -28,7 +28,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 
 @SpringBootTest(classes = GitapiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-public class GitApiIntegrationTest {
+public class GitApiIT {
 
     @Autowired
     private WebTestClient webTestClient;

@@ -1,4 +1,9 @@
 # gitapi
+**Build status**
+
+<sup>main:</sup>
+[![Actions Status](https://github.com/BartoszThielmann/gitapi/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/BartoszThielmann/gitapi/actions)
+
 
 ## Table of contents
 * [Introduction](#Introduction)
