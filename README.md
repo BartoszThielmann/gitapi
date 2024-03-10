@@ -55,6 +55,8 @@ Started GitapiApplication in 2.428 seconds (process running for 2.868)
 ```
 
 ## Usage
+If the app is running, Swagger docs are available at /docs.html (http://localhost:8080/docs.html).
+
 Requests can be sent with curl:
 ```bash
 curl -L \
