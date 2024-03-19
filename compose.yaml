@@ -1,0 +1,5 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080" # container port only - port on host will be chosen by OS
